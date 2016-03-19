@@ -29,12 +29,13 @@ class KMeans():
 		cost = cost / m
 		return cost
 
-	def cluster(self,data,centroids,result):
+	def cluster(self,data,data_norm,centroids,cen_norm,result):
+		global X_mean,X_std
 		for i in range(len(data)):
 			distance = -1
 			k_class = -1
 			for j in range(len(centroids)):
-				new_distance = self.euclidean_distance(data[i],centroids[j])
+				new_distance = self.euclidean_distance(data_norm[i],cen_norm[j])
 				if distance == -1:
 					distance = new_distance
 					k_class = j
@@ -47,11 +48,10 @@ class KMeans():
 			result_i = np.array(result[i])
 			mean = list(result_i.mean(0))
 			new_centroids[i] = [round(w,5) for w in mean]
-		if new_centroids != centroids:
-			centroids = new_centroids.copy()
-			self.cluster(data,centroids,result)
-		cen = new_centroids.copy()
-		return cen,result
+		# if new_centroids != centroids:
+		# 	centroids = new_centroids.copy()
+		# 	self.cluster(data,centroids,result)
+		return new_centroids,result
 
 if __name__ == '__main__':
 	km = KMeans()
@@ -59,25 +59,20 @@ if __name__ == '__main__':
 	n = 10
 	k = 3
 	X = [[random.random() for i in range(n)] for i in range(m)]
-	'''
-	X = np.matrix(X)
-	X = (X - X.mean(0))/X.std(0)
-	X = np.array(X).reshape(m,n).tolist()
-	'''
-	Y = [[] for i in range(k)]
 
+	X_norm = np.matrix(X)
+	X_std = X_norm.std(0)
+	X_mean = X_norm.mean(0)
+	X_norm = (X_norm - X_mean)/X_std
 	centroids = km.init_centroids(X,k)
-	k_centroids,output = km.cluster(X,centroids,Y)
-	cost = km.cost_function(k_centroids,output,m)
-'''
-	for i in range(9):
+	C_norm = np.matrix(centroids)
+	C_norm = (C_norm - X_mean)/X_std
+
+	X_norm = np.array(X_norm).reshape(m,n).tolist()
+	C_norm = np.array(C_norm).reshape(k,n).tolist()
+
+	for i in range(100):
 		Y = [[] for i in range(k)]
-		centroids = km.init_centroids(X,k)
-		k_centroids_next,output_next = km.cluster(X,centroids,Y)
-		cost_next = km.cost_function(k_centroids_next,output_next,m)
-		if cost > cost_next:
-			k_centroids = k_centroids_next.copy()
-			output = output_next.copy()
-			cost = cost_next
-'''
+		centroids,result = km.cluster(X,X_norm,centroids,C_norm,Y)
+	cost = km.cost_function(centroids,Y,m)
 
